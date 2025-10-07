@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zama Creator Program — Day 3 (Quiz)</title>
+  <style>
+    :root{
+      --bg:#2b2200; /* very dark yellow-brown */
+      --panel:#fff8d6; /* light yellow */
+      --accent:#e6b800; /* cheerful yellow */
+      --muted:#8b6f00;
+      --card:#3a2f05;
+      --glass: rgba(255,248,214,0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#231900);color:var(--panel)}
+    .wrap{max-width:880px;margin:32px auto;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,0.6);backdrop-filter: blur(6px);}
+    .header{display:flex;align-items:center;gap:18px}
+    .bear{width:92px;height:92px;flex:0 0 92px}
+    h1{font-size:20px;margin:0 0 4px 0}
+    p.lead{margin:0;color:var(--panel);opacity:0.9}
+    .card{margin-top:18px;background:var(--card);padding:18px;border-radius:14px}
+    .question{font-size:18px;margin:0 0 12px 0}
+    .options{display:grid;grid-template-columns:1fr;gap:10px}
+    .opt{padding:12px 14px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:transform .12s ease, background .12s ease}
+    .opt:hover{transform:translateY(-4px)}
+    .opt.selected{outline:3px solid rgba(230,184,0,0.14);background:linear-gradient(90deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))}
+    .controls{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:16px}
+    .btn{background:var(--accent);color:#221800;border:none;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--panel)}
+    .progress{height:10px;background:rgba(255,255,255,0.04);border-radius:8px;overflow:hidden}
+    .progress > div{height:100%;background:linear-gradient(90deg,var(--accent),#ffd86b);width:0%}
+    .footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center}
+    .result{padding:12px;border-radius:10px;background:rgba(0,0,0,0.25);font-weight:700}
+    .hint{margin-top:10px;font-size:13px;color:var(--muted)}
+    /* responsive */
+    @media (max-width:520px){.wrap{margin:12px;padding:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <svg class="bear" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <defs>
+          <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+            <stop stop-color="#ffd86b" offset="0"/>
+            <stop stop-color="#e6b800" offset="1"/>
+          </linearGradient>
+        </defs>
+        <circle cx="60" cy="60" r="56" fill="url(#g)" />
+        <ellipse cx="42" cy="46" rx="10" ry="12" fill="#2b1e00" />
+        <ellipse cx="78" cy="46" rx="10" ry="12" fill="#2b1e00" />
+        <circle cx="60" cy="66" r="20" fill="#2b1e00" />
+        <circle cx="54" cy="62" r="3" fill="#fff3b8" />
+        <circle cx="66" cy="62" r="3" fill="#fff3b8" />
+        <path d="M52 76 q8 6 16 0" stroke="#fff3b8" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1>Zama Creator Program — Day 3</h1>
+        <p class="lead">Dark yellow theme · Cute bear style · Quiz tool</p>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard">
+      <div id="qNum" style="font-size:13px;color:var(--muted)">Question 1 / 10</div>
+      <div id="question" class="question">Loading...</div>
+      <div class="options" id="options"></div>
+
+      <div class="controls">
+        <div style="flex:1">
+          <div class="progress" aria-hidden><div id="prog"></div></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn secondary" id="prevBtn">Previous</button>
+          <button class="btn" id="nextBtn">Next</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="hint" id="feedback">Select an answer to see feedback.</div>
+        <div class="result" id="score">Score: 0</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Questions array (10 questions). Each item: {q, opts:[4], correct:index (0..3), hint}
+    const questions = [
+      { q: "What is the primary goal of the fhevm protocol?", opts:[
+          "To replace existing EVM blockchains with a new layer-1 chain",
+          "To enable confidential smart contracts on EVM-compatible chains using Fully Homomorphic Encryption",
+          "To outsource smart contract execution entirely off-chain",
+          "To accelerate non-encrypted DeFi transactions"
+        ], correct:1, hint:"fhevm focuses on confidential smart contracts via FHE." },
+      { q: "Which cryptographic primitives are combined in fhevm to achieve confidentiality and verifiability?", opts:[
+          "Only Fully Homomorphic Encryption (FHE)",
+          "FHE + Digital Signatures",
+          "FHE + Multi-Party Computation (MPC) + Zero-Knowledge Proofs (ZK)",
+          "FHE + Hash Functions"
+        ], correct:2, hint:"fhevm uses FHE, MPC for threshold decryption, and ZK proofs for correctness." },
+      { q: "How does fhevm keep the host chain from doing heavy FHE computation?", opts:[
+          "Host chain performs all FHE operations itself",
+          "FHE operations are executed off-chain by coprocessors, while the host emits pointers/events",
+          "FHE is only simulated on-chain",
+          "Host chain uses trusted hardware to compute FHE operations"
+        ], correct:1, hint:"Coprocessors carry out encrypted computation off-chain." },
+      { q: "What is the role of threshold decryption in fhevm?", opts:[
+          "To let any single node freely decrypt all ciphertexts",
+          "To allow decryption only when a quorum of MPC participants cooperate",
+          "To decrypt data using only the user’s local private key",
+          "To avoid any decryption ever"
+        ], correct:1, hint:"Threshold decryption prevents centralized control by requiring cooperation." },
+      { q: "Why are Zero-Knowledge Proofs (ZK) used together with FHE in fhevm?", opts:[
+          "To encrypt data more strongly",
+          "To prove the user knows the plaintext corresponding to an encrypted input without revealing it",
+          "To speed up FHE operations",
+          "To replace MPC"
+        ], correct:1, hint:"ZK proves knowledge of plaintexts or correctness of encrypted inputs without disclosure." },
+      { q: "Which is a privacy-focused use-case enabled by fhevm?", opts:[
+          "Public token balances visible to all",
+          "Sealed-bid auctions where bids remain encrypted until reveal",
+          "Completely off-chain DeFi protocols",
+          "Fully transparent DAO voting"
+        ], correct:1, hint:"Sealed-bid auctions benefit from encrypted bids." },
+      { q: "How does fhevm maintain composability with non-confidential smart contracts?", opts:[
+          "It isolates confidential contracts so they cannot interoperate",
+          "It forces all contracts to be rewritten",
+          "It allows mixing encrypted and unencrypted contracts so they can interoperate",
+          "It disallows interaction with standard contracts"
+        ], correct:2, hint:"fhevm lets encrypted and unencrypted contracts interoperate." },
+      { q: "What is a major FHE performance challenge fhevm must address?", opts:[
+          "FHE cannot support addition or multiplication",
+          "Noise accumulation during computations",
+          "FHE cannot be parallelized",
+          "FHE is broken by standard cryptanalysis"
+        ], correct:1, hint:"Noise growth is a central issue; bootstrapping or parameter choices are needed." },
+      { q: "What is the described roadmap for improving fhevm throughput?", opts:[
+          "Stick with CPU-only execution indefinitely",
+          "Move from CPU → GPU → FPGA → ASIC to scale throughput",
+          "Limit throughput to avoid complexity",
+          "Use only software optimizations"
+        ], correct:1, hint:"Hardware acceleration path (GPU/FPGA/ASIC) is planned to scale FHE." },
+      { q: "Which component tracks who is allowed to decrypt ciphertexts in fhevm?", opts:[
+          "The coprocessors",
+          "Host chain’s block validation logic",
+          "An Access Control List (ACL) smart contract",
+          "The private key holder"
+        ], correct:2, hint:"An ACL smart contract on the host chain manages decryption permissions." }
+    ];
+
+    // state
+    let idx = 0;
+    const answers = Array(questions.length).fill(null);
+    let score = 0;
+
+    const qNumEl = document.getElementById('qNum');
+    const qEl = document.getElementById('question');
+    const optsEl = document.getElementById('options');
+    const progEl = document.getElementById('prog');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const feedback = document.getElementById('feedback');
+    const scoreEl = document.getElementById('score');
+
+    function render(){
+      const q = questions[idx];
+      qNumEl.textContent = `Question ${idx+1} / ${questions.length}`;
+      qEl.textContent = q.q;
+      optsEl.innerHTML = '';
+      q.opts.forEach((o,i)=>{
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.innerText = o;
+        b.onclick = ()=> select(i);
+        if(answers[idx] !== null){
+          b.classList.toggle('selected', answers[idx]===i);
+        }
+        optsEl.appendChild(b);
+      });
+      progEl.style.width = `${Math.round((idx)/(questions.length-1)*100)}%`;
+      updateControls();
+    }
+
+    function select(optionIndex){
+      // if already answered, ignore changes (you can change this behavior)
+      answers[idx] = optionIndex;
+      // immediate feedback: mark correct/wrong, update score
+      const q = questions[idx];
+      const optionButtons = Array.from(optsEl.children);
+      optionButtons.forEach((btn,i)=>{
+        btn.classList.remove('correct','wrong');
+        btn.style.opacity = '1';
+        btn.disabled = false;
+      });
+      if(optionIndex === q.correct){
+        feedback.textContent = 'Correct! ' + q.hint;
+      } else {
+        feedback.textContent = 'Incorrect. ' + q.hint;
+      }
+      // recalc score
+      score = answers.reduce((acc,a,ii)=> acc + ((a===questions[ii].correct)?1:0), 0);
+      scoreEl.textContent = `Score: ${score} / ${questions.length}`;
+      render();
+    }
+
+    function updateControls(){
+      prevBtn.disabled = idx===0;
+      nextBtn.textContent = idx===questions.length-1 ? 'Finish' : 'Next';
+    }
+
+    prevBtn.onclick = ()=>{
+      if(idx>0){ idx--; render(); feedback.textContent = 'Select an answer to see feedback.' }
+    }
+    nextBtn.onclick = ()=>{
+      if(idx < questions.length-1){ idx++; render(); feedback.textContent = 'Select an answer to see feedback.' }
+      else { // finish
+        showResult();
+      }
+    }
+
+    function showResult(){
+      const percent = Math.round((score/questions.length)*100);
+      qNumEl.textContent = 'Quiz Completed';
+      qEl.textContent = `You scored ${score} out of ${questions.length} (${percent}%)`;
+      optsEl.innerHTML = '<div style="padding:14px;background:rgba(255,255,255,0.03);border-radius:10px">Thanks for completing Day 3 — Zama Creator Program!</div>';
+      progEl.style.width = '100%';
+      feedback.textContent = 'Review the questions by pressing Previous, or restart the quiz by reloading the page.';
+    }
+
+    // initial render
+    render();
+
+    // keyboard accessibility
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'ArrowRight') nextBtn.click();
+      if(e.key === 'ArrowLeft') prevBtn.click();
+    });
+  </script>
+</body>
+</html>
